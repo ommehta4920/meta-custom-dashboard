@@ -3,7 +3,7 @@ const path = require("path");
 
 const app = express();
 
-// Increase payload limit
+// Payload limits
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -19,7 +19,10 @@ app.get("/api/meta", (req, res) => {
   res.json(latestMetaData);
 });
 
-// ✅ Serve index.html on root
+// ✅ Serve all static files from root folder
+app.use(express.static(path.join(__dirname)));
+
+// ✅ Explicit root fallback (important)
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
