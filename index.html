@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <title>Meta Ads Dashboard</title>
   <style>
@@ -8,56 +9,64 @@
       padding: 20px;
       background: #f4f6f8;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
       background: #fff;
     }
-    th, td {
+
+    th,
+    td {
       padding: 12px;
       border-bottom: 1px solid #ddd;
       text-align: left;
     }
+
     th {
       background: #4374B8;
       color: #fff;
     }
   </style>
 </head>
+
 <body>
 
-<h2>Meta Ads Performance</h2>
+  <h2>Meta Ads Performance</h2>
 
-<table id="adsTable">
-  <thead>
-  <tr>
-    <th>Ad Name</th>
-    <th>Impressions</th>
-    <th>Clicks</th>
-    <th>Spend</th>
-    <th>CTR</th>
-    <th>CPC</th>
-  </tr>
-</thead>
-  <tbody></tbody>
-</table>
+  <table id="adsTable">
+    <thead>
+      <tr>
+        <th>Ad Name</th>
+        <th>Impressions</th>
+        <th>Clicks</th>
+        <th>Spend</th>
+        <th>CTR</th>
+        <th>CPC</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-<script>
-  fetch("/api/meta")
-    .then(res => res.json())
-    .then(data => {
-      const tbody = document.querySelector("#adsTable tbody");
-      tbody.innerHTML = "";
+  <script>
+    fetch("/api/meta")
+      .then(res => res.json())
+      .then(response => {
+        const tbody = document.querySelector("#adsTable tbody");
+        tbody.innerHTML = "";
 
-      if (!Array.isArray(data) || data.length === 0) {
-        tbody.innerHTML = "<tr><td colspan='6'>No data yet</td></tr>";
-        return;
-      }
+        // ✅ unwrap the real ads array
+        const ads = response?.[0]?.data || [];
 
-      data.forEach(row => {
-        const tr = document.createElement("tr");
+        if (!Array.isArray(ads) || ads.length === 0) {
+          tbody.innerHTML = "<tr><td colspan='6'>No data yet</td></tr>";
+          return;
+        }
 
-        tr.innerHTML = `
+        ads.forEach(row => {
+          const tr = document.createElement("tr");
+
+          tr.innerHTML = `
           <td>${row.ad_name}</td>
           <td>${row.total_impressions.toLocaleString()}</td>
           <td>${row.total_clicks}</td>
@@ -66,14 +75,15 @@
           <td>₹${row.cpc.toFixed(2)}</td>
         `;
 
-        tbody.appendChild(tr);
+          tbody.appendChild(tr);
+        });
+      })
+      .catch(err => {
+        console.error("Error loading data", err);
       });
-    })
-    .catch(err => {
-      console.error("Error loading data", err);
-    });
-</script>
+  </script>
 
 
 </body>
+
 </html>
