@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Meta Ads Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f4f6f8;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+    }
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background: #4374B8;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Meta Ads Performance</h2>
+
+<table id="adsTable">
+  <thead>
+    <tr>
+      <th>Campaign</th>
+      <th>Impressions</th>
+      <th>Clicks</th>
+      <th>Spend</th>
+      <th>CTR (%)</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+  fetch("https://primary-production-e873.up.railway.app/webhook/e9b85b81-a4d8-47bb-816c-04716e2948ae")
+    .then(res => res.json())
+    .then(data => {
+      const tbody = document.querySelector("#adsTable tbody");
+
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${row.campaign_name}</td>
+          <td>${row.impressions}</td>
+          <td>${row.clicks}</td>
+          <td>₹${row.spend}</td>
+          <td>${row.ctr}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    })
+    .catch(err => console.error("Error loading data", err));
+</script>
+
+</body>
+</html>
