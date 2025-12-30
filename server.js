@@ -31,7 +31,7 @@ app.post('/api/meta', (req, res) => {
 });
 
 // 2️⃣ PULL route (Dashboard → your server)
-app.get('/api/ads', async (req, res) => {
+app.get('/api/meta', async (req, res) => {
     try {
         console.log('Fetching Meta Ads data...');
 
