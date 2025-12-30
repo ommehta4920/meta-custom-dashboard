@@ -7,7 +7,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // CONFIG: Your n8n Webhook URL (Production URL)
-const N8N_WEBHOOK_URL = 'https://primary-production-e873.up.railway.app/webhook/meta-ads-data';
+const N8N_WEBHOOK_URL = 'https://primary-production-e873.up.railway.app/api/meta';
 
 // Middleware
 app.use(cors());
@@ -23,19 +23,19 @@ app.get('/', (req, res) => {
 // This prevents CORS issues by making the request server-to-server
 app.get('/api/ads', async (req, res) => {
     try {
-        console.log('Syncing with n8n...');
-        const response = await axios.get(N8N_WEBHOOK_URL, {
-            timeout: 10000 // 10 second timeout
-        });
+        console.log('Fetching data from Meta API...');
         
-        console.log('Data received from n8n');
+        const response = await axios.get(
+            'https://meta-custom-dashboard-production.up.railway.app/api/meta',
+            { timeout: 15000 }
+        );
+
         res.json(response.data);
     } catch (error) {
-        console.error('Error fetching data:', error.message);
-        // Send a clean error to frontend
-        res.status(500).json({ 
-            error: 'Failed to fetch data',
-            details: error.message 
+        console.error('Meta API Error:', error.message);
+        res.status(500).json({
+            error: 'Failed to fetch Meta Ads data',
+            details: error.message
         });
     }
 });
