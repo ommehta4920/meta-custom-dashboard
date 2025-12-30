@@ -21,24 +21,23 @@ app.get('/', (req, res) => {
 
 // Route 2: API Proxy to n8n
 // This prevents CORS issues by making the request server-to-server
-app.get('/api/ads', async (req, res) => {
+app.post('/api/meta', async (req, res) => {
     try {
-        console.log('Fetching data from Meta API...');
-        
-        const response = await axios.get(
-            'https://meta-custom-dashboard-production.up.railway.app/api/meta',
-            { timeout: 15000 }
-        );
+        console.log('POST data received from Meta / n8n');
 
-        res.json(response.data);
+        // If data is coming in body
+        const data = req.body;
+
+        // Just forward it to frontend
+        res.json(data);
     } catch (error) {
-        console.error('Meta API Error:', error.message);
         res.status(500).json({
-            error: 'Failed to fetch Meta Ads data',
+            error: 'POST Meta API failed',
             details: error.message
         });
     }
 });
+
 
 app.listen(PORT, () => {
     console.log(`Visa CRM Dashboard running at http://localhost:${PORT}`);
