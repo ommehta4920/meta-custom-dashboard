@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Meta Ads Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+  <h2>Summary</h2>
+
+  <div class="stats">
+    <div class="stat-card">
+      <h2 id="totalSpend">₹0</h2>
+      <p>Total Spend</p>
+    </div>
+
+    <div class="stat-card">
+      <h2 id="totalImpressions">0</h2>
+      <p>Total Impressions</p>
+    </div>
+
+    <div class="stat-card">
+      <h2 id="totalClicks">0</h2>
+      <p>Total Clicks</p>
+    </div>
+
+    <div class="stat-card">
+      <h2 id="totalLeads">0</h2>
+      <p>Total Leads</p>
+    </div>
+
+    <div class="stat-card">
+      <h2 id="ctr">0%</h2>
+      <p>CTR</p>
+    </div>
+
+    <div class="stat-card">
+      <h2 id="cpl">₹0</h2>
+      <p>Cost Per Lead</p>
+    </div>
+
+    <div class="stat-card">
+      <h2 id="conversionRate">0%</h2>
+      <p>Lead Conversion</p>
+    </div>
+  </div>
+
+  <h2>Meta Ads Performance</h2>
+
+  <table id="adsTable">
+    <thead>
+      <tr>
+        <th>Ad Name</th>
+        <th>Impressions</th>
+        <th>Clicks</th>
+        <th>Spend</th>
+        <th>CTR</th>
+        <th>CPC</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <script>
+    async function loadSummary() {
+      try {
+        const res = await fetch("/api/meta");
+        const data = await res.json();
+
+        if (!data || !data.length) return;
+
+        const summary = data[0]; // because your API returns array
+
+        document.getElementById("totalSpend").innerText =
+          `₹${Number(summary.total_spend).toLocaleString("en-IN")}`;
+
+        document.getElementById("totalImpressions").innerText =
+          Number(summary.total_impressions).toLocaleString();
+
+        document.getElementById("totalClicks").innerText =
+          Number(summary.total_clicks).toLocaleString();
+
+        document.getElementById("totalLeads").innerText =
+          summary.totalLeads;
+
+        document.getElementById("ctr").innerText =
+          `${summary.CTR}%`;
+
+        document.getElementById("cpl").innerText =
+          `₹${summary.CPL}`;
+
+        document.getElementById("conversionRate").innerText =
+          `${summary.leadConvertionRate}%`;
+
+      } catch (err) {
+        console.error("Summary load failed", err);
+      }
+    }
+    loadSummary();
+    setInterval(loadSummary, 60000);
+  </script>
+
+  <script>
+    fetch("/api/meta")
+      .then(res => res.json())
+      .then(response => {
+        const tbody = document.querySelector("#adsTable tbody");
+        tbody.innerHTML = "";
+
+        // ✅ unwrap the real ads array
+        const ads = response?.meta_data || [];
+
+        if (!Array.isArray(ads) || ads.length === 0) {
+          tbody.innerHTML = "<tr><td colspan='6'>No data yet</td></tr>";
+          return;
+        }
+
+        ads.forEach(row => {
+          const tr = document.createElement("tr");
+
+          tr.innerHTML = `
+          <td>${row.ad_name}</td>
+          <td>${row.total_impressions.toLocaleString()}</td>
+          <td>${row.total_clicks}</td>
+          <td>₹${row.total_spend.toFixed(2)}</td>
+          <td>${(row.ctr * 100).toFixed(2)}%</td>
+          <td>₹${row.cpc.toFixed(2)}</td>
+        `;
+
+          tbody.appendChild(tr);
+        });
+      })
+      .catch(err => {
+        console.error("Error loading data", err);
+      });
+  </script>
+
+
+</body>
+
+</html>
