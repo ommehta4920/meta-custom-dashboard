@@ -6,39 +6,49 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// CONFIG: Your n8n Webhook URL (Production URL)
-const N8N_WEBHOOK_URL = 'https://primary-production-e873.up.railway.app/api/meta';
+// External Meta / n8n API (pull source)
+const META_API_URL = 'https://primary-production-e873.up.railway.app/api/meta';
 
 // Middleware
 app.use(cors());
-app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Route 1: Serve the Dashboard HTML
+// Serve dashboard
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Route 2: API Proxy to n8n
-// This prevents CORS issues by making the request server-to-server
-app.post('/api/meta', async (req, res) => {
+// 1️⃣ PUSH route (Webhook / n8n → your server)
+app.post('/api/meta', (req, res) => {
+    console.log('Incoming POST data received');
+
+    // For now just acknowledge
+    res.json({
+        success: true,
+        received: true
+    });
+});
+
+// 2️⃣ PULL route (Dashboard → your server)
+app.get('/api/ads', async (req, res) => {
     try {
-        console.log('POST data received from Meta / n8n');
+        console.log('Fetching Meta Ads data...');
 
-        // If data is coming in body
-        const data = req.body;
+        const response = await axios.get(META_API_URL, {
+            timeout: 15000
+        });
 
-        // Just forward it to frontend
-        res.json(data);
+        res.json(response.data);
     } catch (error) {
+        console.error('Meta API fetch error:', error.message);
         res.status(500).json({
-            error: 'POST Meta API failed',
+            error: 'Failed to fetch Meta Ads data',
             details: error.message
         });
     }
 });
 
-
 app.listen(PORT, () => {
-    console.log(`Visa CRM Dashboard running at http://localhost:${PORT}`);
+    console.log(`Dashboard running at http://localhost:${PORT}`);
 });
