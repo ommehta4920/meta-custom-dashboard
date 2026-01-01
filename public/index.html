@@ -1,21 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visa Consultancy | Marketing Intelligence Dashboard</title>
-    
+
     <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <!-- Chart.js with Plugins -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-    
+
     <!-- Styles -->
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
 
     <!-- Sidebar Navigation -->
@@ -47,7 +50,7 @@
 
     <!-- Main Content Area -->
     <main class="main-wrapper">
-        
+
         <!-- Top Header -->
         <header class="top-bar">
             <div class="breadcrumb">
@@ -78,7 +81,7 @@
 
         <!-- Dashboard Grid -->
         <div class="content-grid" id="dashboardContent">
-            
+
             <!-- 1. KPI Cards -->
             <section class="kpi-row">
                 <div class="kpi-card">
@@ -231,7 +234,8 @@
                         <div class="table-controls">
                             <div class="search-wrap">
                                 <i class="fas fa-search"></i>
-                                <input type="text" id="tableSearch" placeholder="Search ads, campaigns..." onkeyup="filterTable()">
+                                <input type="text" id="tableSearch" placeholder="Search ads, campaigns..."
+                                    onkeyup="filterTable()">
                             </div>
                             <select id="statusFilter" class="filter-select" onchange="filterTable()">
                                 <option value="all">All Status</option>
@@ -253,19 +257,27 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th class="sortable" onclick="sortTable('status')">Status <i class="fas fa-sort"></i></th>
-                                    <th class="sortable" onclick="sortTable('ad_name')">Ad Name / Campaign <i class="fas fa-sort"></i></th>
-                                    <th class="text-right sortable" onclick="sortTable('spend')">Spend <i class="fas fa-sort"></i></th>
-                                    <th class="text-right sortable" onclick="sortTable('impressions')">Impressions <i class="fas fa-sort"></i></th>
-                                    <th class="text-right sortable" onclick="sortTable('clicks')">Clicks <i class="fas fa-sort"></i></th>
-                                    <th class="text-right sortable" onclick="sortTable('leads')">Leads <i class="fas fa-sort"></i></th>
-                                    <th class="text-right sortable" onclick="sortTable('cpl')">CPL <i class="fas fa-sort"></i></th>
-                                    <th class="text-right sortable" onclick="sortTable('roas')">ROAS <i class="fas fa-sort"></i></th>
+                                    <th class="sortable" onclick="sortTable('status')">Status <i
+                                            class="fas fa-sort"></i></th>
+                                    <th class="sortable" onclick="sortTable('ad_name')">Ad Name / Campaign <i
+                                            class="fas fa-sort"></i></th>
+                                    <th class="text-right sortable" onclick="sortTable('spend')">Spend <i
+                                            class="fas fa-sort"></i></th>
+                                    <th class="text-right sortable" onclick="sortTable('impressions')">Impressions <i
+                                            class="fas fa-sort"></i></th>
+                                    <th class="text-right sortable" onclick="sortTable('clicks')">Clicks <i
+                                            class="fas fa-sort"></i></th>
+                                    <th class="text-right sortable" onclick="sortTable('leads')">Leads <i
+                                            class="fas fa-sort"></i></th>
+                                    <th class="text-right sortable" onclick="sortTable('cpl')">CPL <i
+                                            class="fas fa-sort"></i></th>
+                                    <th class="text-right sortable" onclick="sortTable('roas')">ROAS <i
+                                            class="fas fa-sort"></i></th>
                                     <th class="text-center">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="adsTableBody">
-                                <!-- Data Rows -->
+                                <!-- Data Rows will be injected here -->
                             </tbody>
                         </table>
                     </div>
@@ -296,4 +308,5 @@
 
     <script src="js/app.js"></script>
 </body>
+
 </html>
