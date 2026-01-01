@@ -67,11 +67,11 @@
       try {
         const res = await fetch("/api/meta");
         const data = await res.json();
-
+        console.log("called");
         if (!data || !data.length) return;
 
         const summary = data[0]; // because your API returns array
-
+        console.log("Data loaded");
         document.getElementById("totalSpend").innerText =
           `₹${Number(summary.total_spend).toLocaleString("en-IN")}`;
 
