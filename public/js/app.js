@@ -32,7 +32,7 @@ async function fetchData() {
 
     try {
         // Fetch data from the API
-        const response = await fetch('/api/ads');
+        const response = await fetch('/api/meta');
         const json = await response.json();
 
         // If the data is wrapped in an object (meta_data), we extract it
