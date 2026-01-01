@@ -1,43 +1,33 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
+const express = require("express");
+const path = require("path");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-let metaAdsData = []; // In-memory store for Meta ads data
+// Payload limits
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Middleware to handle CORS and JSON requests
-app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+let latestMetaData = [];
 
-// POST: n8n / Meta → server (Receives meta ads data from n8n)
-app.post('/api/meta', (req, res) => {
-    try {
-        console.log('Meta data received:', req.body);
-        metaAdsData = req.body; // Store received data in the in-memory store
-        res.json({ success: true }); // Send success response
-    } catch (error) {
-        console.error('Error processing Meta data:', error);
-        res.status(500).json({ success: false, message: 'Error processing data' });
-    }
+// API routes
+app.post("/api/meta", (req, res) => {
+  latestMetaData = req.body;
+  res.json({ ok: true });
 });
 
-// GET: Dashboard → server (Fetch stored Meta ads data)
-app.get('/api/ads', (req, res) => {
-    try {
-        if (metaAdsData.length === 0) {
-            return res.status(404).json({ success: false, message: 'No data found' });
-        }
-        res.json(metaAdsData); // Send stored Meta ads data
-    } catch (error) {
-        console.error('Error fetching Meta data:', error);
-        res.status(500).json({ success: false, message: 'Error fetching data' });
-    }
+app.get("/api/meta", (req, res) => {
+  res.json(latestMetaData);
 });
 
-// Start the server
-app.listen(PORT, () => {
-    console.log(`Dashboard running at http://localhost:${PORT}`);
+// ✅ Serve all static files from root folder
+app.use(express.static(path.join(__dirname)));
+
+// ✅ Explicit root fallback (important)
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
+// Start server
+app.listen(process.env.PORT || 3000, () => {
+  console.log("Server running");
 });
