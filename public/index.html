@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visa Consultancy | Marketing Intelligence Dashboard</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js with Plugins -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="logo-area">
+            <div class="logo-icon"><i class="fas fa-plane-departure"></i></div>
+            <div class="logo-text">
+                <h2>Visa<span>Corp</span></h2>
+                <p>Marketing Intelligence</p>
+            </div>
+        </div>
+
+        <ul class="nav-links">
+            <li class="active"><a href="#overview"><i class="fas fa-chart-pie"></i> <span>Overview</span></a></li>
+            <li><a href="#campaigns"><i class="fas fa-bullseye"></i> <span>Campaigns</span></a></li>
+            <li><a href="#performance"><i class="fas fa-chart-line"></i> <span>Performance</span></a></li>
+            <li><a href="#insights"><i class="fas fa-robot"></i> <span>AI Insights</span></a></li>
+            <li><a href="#settings"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
+        </ul>
+
+        <div class="user-profile">
+            <div class="avatar"><i class="fas fa-user-tie"></i></div>
+            <div class="user-info">
+                <h4>Admin User</h4>
+                <p>Marketing Director</p>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-wrapper">
+        
+        <!-- Top Header -->
+        <header class="top-bar">
+            <div class="breadcrumb">
+                <h1><i class="fas fa-chart-bar"></i> Meta Ads Performance Dashboard</h1>
+                <p id="lastUpdated"><i class="fas fa-clock"></i> Syncing data...</p>
+            </div>
+            <div class="actions">
+                <select id="dateRange" class="date-selector" onchange="applyDateFilter()">
+                    <option value="all">All Time</option>
+                    <option value="7">Last 7 Days</option>
+                    <option value="30" selected>Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                </select>
+                <button class="btn-secondary" onclick="exportToCSV()" title="Export to CSV">
+                    <i class="fas fa-download"></i> Export
+                </button>
+                <button class="btn-primary" onclick="fetchData()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+        </header>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="spinner"></div>
+            <p>Retrieving Intelligence from n8n...</p>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="content-grid" id="dashboardContent">
+            
+            <!-- 1. KPI Cards -->
+            <section class="kpi-row">
+                <div class="kpi-card">
+                    <div class="icon-box blue"><i class="fas fa-wallet"></i></div>
+                    <div class="kpi-info">
+                        <p>Total Ad Spend</p>
+                        <h3 id="totalSpend">₹0.00</h3>
+                        <small id="spendChange" class="kpi-change">--</small>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="icon-box green"><i class="fas fa-users"></i></div>
+                    <div class="kpi-info">
+                        <p>Total Leads Generated</p>
+                        <h3 id="totalLeads">0</h3>
+                        <small id="leadsChange" class="kpi-change">--</small>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="icon-box purple"><i class="fas fa-comment-dollar"></i></div>
+                    <div class="kpi-info">
+                        <p>Average Cost Per Lead</p>
+                        <h3 id="cpl">₹0.00</h3>
+                        <small id="cplChange" class="kpi-change">--</small>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="icon-box orange"><i class="fas fa-percentage"></i></div>
+                    <div class="kpi-info">
+                        <p>Conversion Rate</p>
+                        <h3 id="conversionRate">0%</h3>
+                        <small id="convChange" class="kpi-change">--</small>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="icon-box teal"><i class="fas fa-eye"></i></div>
+                    <div class="kpi-info">
+                        <p>Total Impressions</p>
+                        <h3 id="totalImpressions">0</h3>
+                        <small id="impressionsChange" class="kpi-change">--</small>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="icon-box pink"><i class="fas fa-hand-pointer"></i></div>
+                    <div class="kpi-info">
+                        <p>Total Clicks</p>
+                        <h3 id="totalClicks">0</h3>
+                        <small id="clicksChange" class="kpi-change">--</small>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="icon-box indigo"><i class="fas fa-chart-line"></i></div>
+                    <div class="kpi-info">
+                        <p>Average ROAS</p>
+                        <h3 id="avgROAS">0x</h3>
+                        <small id="roasChange" class="kpi-change">--</small>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="icon-box amber"><i class="fas fa-bullseye"></i></div>
+                    <div class="kpi-info">
+                        <p>Click-Through Rate</p>
+                        <h3 id="ctr">0%</h3>
+                        <small id="ctrChange" class="kpi-change">--</small>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. Charts Section -->
+            <section class="charts-row">
+                <div class="card chart-large">
+                    <div class="card-header">
+                        <h3><i class="fas fa-chart-bar"></i> Top Performing Ads - Spend vs Leads</h3>
+                        <div class="card-actions">
+                            <select id="chartSort" class="chart-filter" onchange="updateCharts()">
+                                <option value="spend">Sort by Spend</option>
+                                <option value="leads">Sort by Leads</option>
+                                <option value="cpl">Sort by CPL</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="mainTrendChart"></canvas>
+                    </div>
+                </div>
+                <div class="card chart-small">
+                    <div class="card-header">
+                        <h3><i class="fas fa-chart-pie"></i> Campaign Spend Distribution</h3>
+                    </div>
+                    <div class="chart-wrapper doughnut-wrapper">
+                        <canvas id="pieChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2b. Additional Charts -->
+            <section class="charts-row">
+                <div class="card chart-medium">
+                    <div class="card-header">
+                        <h3><i class="fas fa-chart-line"></i> Performance Trend</h3>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+                <div class="card chart-medium">
+                    <div class="card-header">
+                        <h3><i class="fas fa-trophy"></i> Top Campaigns by ROI</h3>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="roiChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. Campaign Performance Comparison -->
+            <section class="campaign-comparison">
+                <div class="card full-width">
+                    <div class="card-header space-between">
+                        <h3><i class="fas fa-balance-scale"></i> Campaign Performance Comparison</h3>
+                        <div class="filter-group">
+                            <select id="campaignFilter" class="filter-select" onchange="filterByCampaign()">
+                                <option value="all">All Campaigns</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="campaign-grid" id="campaignGrid">
+                        <!-- JS Injected -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. AI Insights & Recommendations -->
+            <section class="insights-row">
+                <div class="card full-width">
+                    <div class="card-header">
+                        <h3><i class="fas fa-brain"></i> AI Performance Analysis & Recommendations</h3>
+                    </div>
+                    <div class="insights-container" id="aiInsights">
+                        <!-- JS Injected Content -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. Detailed Data Table -->
+            <section class="table-row">
+                <div class="card full-width">
+                    <div class="card-header space-between">
+                        <h3><i class="fas fa-table"></i> Ad Creative Performance Details</h3>
+                        <div class="table-controls">
+                            <div class="search-wrap">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="tableSearch" placeholder="Search ads, campaigns..." onkeyup="filterTable()">
+                            </div>
+                            <select id="statusFilter" class="filter-select" onchange="filterTable()">
+                                <option value="all">All Status</option>
+                                <option value="good">Performing Well</option>
+                                <option value="bad">Needs Optimization</option>
+                            </select>
+                            <select id="sortBy" class="filter-select" onchange="sortTable()">
+                                <option value="spend">Sort by Spend</option>
+                                <option value="leads">Sort by Leads</option>
+                                <option value="cpl">Sort by CPL</option>
+                                <option value="roas">Sort by ROAS</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-info">
+                        <span id="tableCount">Showing 0 ads</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th class="sortable" onclick="sortTable('status')">Status <i class="fas fa-sort"></i></th>
+                                    <th class="sortable" onclick="sortTable('ad_name')">Ad Name / Campaign <i class="fas fa-sort"></i></th>
+                                    <th class="text-right sortable" onclick="sortTable('spend')">Spend <i class="fas fa-sort"></i></th>
+                                    <th class="text-right sortable" onclick="sortTable('impressions')">Impressions <i class="fas fa-sort"></i></th>
+                                    <th class="text-right sortable" onclick="sortTable('clicks')">Clicks <i class="fas fa-sort"></i></th>
+                                    <th class="text-right sortable" onclick="sortTable('leads')">Leads <i class="fas fa-sort"></i></th>
+                                    <th class="text-right sortable" onclick="sortTable('cpl')">CPL <i class="fas fa-sort"></i></th>
+                                    <th class="text-right sortable" onclick="sortTable('roas')">ROAS <i class="fas fa-sort"></i></th>
+                                    <th class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adsTableBody">
+                                <!-- Data Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Modal for Details -->
+    <div class="modal-backdrop" id="detailModal" onclick="if(event.target === this) closeModal()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Ad Performance Details</h3>
+                <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
