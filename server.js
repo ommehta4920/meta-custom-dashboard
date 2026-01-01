@@ -12,11 +12,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve dashboard (Optional: Uncomment if you want to serve the dashboard on the root URL)
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
 // POST: n8n / Meta → server (Receives meta ads data from n8n)
 app.post('/api/meta', (req, res) => {
     try {
