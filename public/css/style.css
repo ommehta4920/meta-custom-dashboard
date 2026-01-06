@@ -191,6 +191,10 @@ body {
     scroll-behavior: smooth;
 }
 
+.page-content {
+    width: 100%;
+}
+
 /* Header */
 .top-bar { 
     display: flex; 
@@ -318,7 +322,7 @@ body {
 /* KPI Cards */
 .kpi-row { 
     display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); 
+    grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)); 
     gap: 20px; 
 }
 
