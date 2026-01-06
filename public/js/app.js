@@ -79,30 +79,30 @@ async function fetchCampaignData() {
 // ==========================================
 function showPage(page) {
     currentPage = page;
-    
+
     // Hide all pages
     document.querySelectorAll('.page-content').forEach(p => {
         p.style.display = 'none';
     });
-    
+
     // Show selected page
     const pageElement = document.getElementById(page + 'Page');
     if (pageElement) {
         pageElement.style.display = 'block';
     }
-    
+
     // Update navigation active state
     document.querySelectorAll('.nav-links li').forEach(li => {
         li.classList.remove('active');
     });
-    
+
     const navLinks = document.querySelectorAll('.nav-links a');
     navLinks.forEach((link, index) => {
         if (link.getAttribute('onclick')?.includes(`'${page}'`)) {
             link.parentElement.classList.add('active');
         }
     });
-    
+
     // Update dashboard for current page
     if (filteredData.length > 0) {
         updateDashboard(filteredData);
@@ -119,7 +119,7 @@ async function fetchData() {
 
     try {
         const response = await fetch('/api/ads');
-        
+
         // Check if response is ok
         if (!response.ok) {
             // Try to get error details from response
@@ -133,14 +133,14 @@ async function fetchData() {
                     details: "Unable to parse error response"
                 };
             }
-            
+
             const error = new Error(errorData.error || `Server returned ${response.status}: ${response.statusText}`);
             error.errorData = errorData;
             throw error;
         }
-        
+
         const json = await response.json();
-        
+
         // Handle n8n response structure
         if (Array.isArray(json)) {
             rawAdsData = json.map(item => {
@@ -179,108 +179,108 @@ async function fetchData() {
         // Clean and normalize data - filter out null/undefined items first
         rawAdsData = rawAdsData.filter(ad => ad != null).map(ad => {
             try {
-            // Try multiple field name variations for leads
-            const leads = getFieldValue(ad, [
-                'total_leads', 'leads', 'Leads', 'Total Leads', 
-                'total_leads_generated', 'leads_generated', 'conversions'
-            ], 0, 'number');
-            
-            // Try multiple field name variations for spend
-            const spend = getFieldValue(ad, [
-                'total_spend', 'spend', 'Spend', 'Total Spend', 
-                'amount_spent', 'cost', 'Cost'
-            ], 0, 'number');
-            
-            // Try multiple field name variations for impressions
-            const impressions = getFieldValue(ad, [
-                'total_impressions', 'impressions', 'Impressions', 
-                'Total Impressions', 'imp'
-            ], 0, 'number');
-            
-            // Try multiple field name variations for clicks
-            const clicks = getFieldValue(ad, [
-                'total_clicks', 'clicks', 'Clicks', 'Total Clicks', 
-                'link_clicks', 'linkClicks', 'totalClicks'
-            ], Math.round(impressions * 0.01), 'number');
-            
-            // Try multiple field name variations for CPL
-            const cpl = getFieldValue(ad, [
-                'cost_per_lead', 'cpl', 'CPL', 'Cost Per Lead', 
-                'cost_per_conversion'
-            ], (leads > 0 ? spend / leads : 0), 'number');
-            
-            // Ensure cost_per_lead is always a valid number
-            const safeCpl = (cpl != null && !isNaN(cpl) && isFinite(cpl)) ? cpl : (leads > 0 ? spend / leads : 0);
-            
-            // Get campaign name with multiple fallbacks (handle empty strings)
-            let campaignName = getFieldValue(ad, [
-                'campaign_name', 'Campaign Name', 'campaignName', 'Campaign',
-                'campaign', 'Campaign_Name', 'campaign_name', 'CampaignName'
-            ], '', 'string');
-            // If campaign_name is empty string, try to get from adset or use default
-            if (!campaignName || campaignName.trim() === '') {
-                campaignName = getFieldValue(ad, [
-                    'adset_name', 'Adset Name', 'adsetName', 'Adset_Name',
-                    'ad_set_name', 'Ad Set Name'
-                ], 'Unnamed Campaign', 'string');
-            }
-            // Final fallback
-            if (!campaignName || campaignName.trim() === '') {
-                campaignName = 'Unnamed Campaign';
-            }
-            
-            // Get performance category with multiple fallbacks
-            const performanceCategory = getFieldValue(ad, [
-                'Performing Ad', 'performing_ad', 'Performing_Ad', 'performingAd',
-                'performance_category', 'Performance Category', 'performanceCategory',
-                'performance', 'Performance', 'status', 'Status',
-                'Performance_Status', 'performance_status', 'PerformanceStatus'
-            ], 'Unknown', 'string');
-            
-            // Get ad name with multiple fallbacks
-            const adName = getFieldValue(ad, [
-                'ad_name', 'Ad Name', 'adName', 'Ad_Name',
-                'name', 'Name', 'ad', 'Ad'
-            ], 'Unnamed Ad', 'string');
-            
-            // Get ad ID with multiple fallbacks
-            const adId = getFieldValue(ad, [
-                'ad_id', 'Ad ID', 'adId', 'Ad_Id',
-                'id', 'Id', 'ID', '_id'
-            ], Math.random().toString(36).substr(2, 9), 'string');
-            
-            return {
-                ...ad, // Keep all original fields first
-                // Normalized numeric fields
-                total_spend: spend || 0,
-                total_leads: Math.round(leads) || 0,
-                total_impressions: Math.round(impressions) || 0,
-                clicks: Math.round(clicks) || 0,
-                // Also preserve total_clicks if it exists
-                total_clicks: ad.total_clicks || Math.round(clicks) || 0,
-                cost_per_lead: safeCpl,
-                roas: parseFloat(ad.roas || ad.ROAS || ad.roi || ad.ROI || 0),
-                // Normalized string fields - these will override original if they exist
-                ad_name: adName,
-                campaign_name: campaignName,
-                ad_id: adId,
-                performance_category: performanceCategory,
-                // Preserve original fields that might be useful
-                adset_name: ad.adset_name || ad.adsetName || ad['Adset Name'] || '',
-                justification: ad.Justification || ad.justification || '',
-                recommendation: ad.Recommendation || ad.recommendation || '',
-                objective: ad.objective || ad.Objective || '',
-                ctr: ad.ctr || ad.CTR || 0,
-                cpc: ad.cpc || ad.CPC || 0,
-                cpm: ad.cpm || ad.CPM || 0,
-                conversion_rate: ad.conversion_rate || ad.Conversion_Rate || ad['Conversion Rate'] || 0,
-                // Date fields - preserve as-is (might be strings, Date objects, or timestamps)
-                start_date: ad.start_date || ad.startDate || ad['Start Date'] || ad.Start_Date || null,
-                stop_date: ad.stop_date || ad.stopDate || ad['Stop Date'] || ad.Stop_Date || null,
-                // Ad metadata fields
-                ad_created_time: ad.ad_created_time || ad.adCreatedTime || ad['Ad Created Time'] || ad.ad_created_time || null,
-                effective_status: ad.effective_status || ad.effectiveStatus || ad['Effective Status'] || ad.Effective_Status || 'UNKNOWN'
-            };
+                // Try multiple field name variations for leads
+                const leads = getFieldValue(ad, [
+                    'total_leads', 'leads', 'Leads', 'Total Leads',
+                    'total_leads_generated', 'leads_generated', 'conversions'
+                ], 0, 'number');
+
+                // Try multiple field name variations for spend
+                const spend = getFieldValue(ad, [
+                    'total_spend', 'spend', 'Spend', 'Total Spend',
+                    'amount_spent', 'cost', 'Cost'
+                ], 0, 'number');
+
+                // Try multiple field name variations for impressions
+                const impressions = getFieldValue(ad, [
+                    'total_impressions', 'impressions', 'Impressions',
+                    'Total Impressions', 'imp'
+                ], 0, 'number');
+
+                // Try multiple field name variations for clicks
+                const clicks = getFieldValue(ad, [
+                    'total_clicks', 'clicks', 'Clicks', 'Total Clicks',
+                    'link_clicks', 'linkClicks', 'totalClicks'
+                ], Math.round(impressions * 0.01), 'number');
+
+                // Try multiple field name variations for CPL
+                const cpl = getFieldValue(ad, [
+                    'cost_per_lead', 'cpl', 'CPL', 'Cost Per Lead',
+                    'cost_per_conversion'
+                ], (leads > 0 ? spend / leads : 0), 'number');
+
+                // Ensure cost_per_lead is always a valid number
+                const safeCpl = (cpl != null && !isNaN(cpl) && isFinite(cpl)) ? cpl : (leads > 0 ? spend / leads : 0);
+
+                // Get campaign name with multiple fallbacks (handle empty strings)
+                let campaignName = getFieldValue(ad, [
+                    'campaign_name', 'Campaign Name', 'campaignName', 'Campaign',
+                    'campaign', 'Campaign_Name', 'campaign_name', 'CampaignName'
+                ], '', 'string');
+                // If campaign_name is empty string, try to get from adset or use default
+                if (!campaignName || campaignName.trim() === '') {
+                    campaignName = getFieldValue(ad, [
+                        'adset_name', 'Adset Name', 'adsetName', 'Adset_Name',
+                        'ad_set_name', 'Ad Set Name'
+                    ], 'Unnamed Campaign', 'string');
+                }
+                // Final fallback
+                if (!campaignName || campaignName.trim() === '') {
+                    campaignName = 'Unnamed Campaign';
+                }
+
+                // Get performance category with multiple fallbacks
+                const performanceCategory = getFieldValue(ad, [
+                    'Performing Ad', 'performing_ad', 'Performing_Ad', 'performingAd',
+                    'performance_category', 'Performance Category', 'performanceCategory',
+                    'performance', 'Performance', 'status', 'Status',
+                    'Performance_Status', 'performance_status', 'PerformanceStatus'
+                ], 'Unknown', 'string');
+
+                // Get ad name with multiple fallbacks
+                const adName = getFieldValue(ad, [
+                    'ad_name', 'Ad Name', 'adName', 'Ad_Name',
+                    'name', 'Name', 'ad', 'Ad'
+                ], 'Unnamed Ad', 'string');
+
+                // Get ad ID with multiple fallbacks
+                const adId = getFieldValue(ad, [
+                    'ad_id', 'Ad ID', 'adId', 'Ad_Id',
+                    'id', 'Id', 'ID', '_id'
+                ], Math.random().toString(36).substr(2, 9), 'string');
+
+                return {
+                    ...ad, // Keep all original fields first
+                    // Normalized numeric fields
+                    total_spend: spend || 0,
+                    total_leads: Math.round(leads) || 0,
+                    total_impressions: Math.round(impressions) || 0,
+                    clicks: Math.round(clicks) || 0,
+                    // Also preserve total_clicks if it exists
+                    total_clicks: ad.total_clicks || Math.round(clicks) || 0,
+                    cost_per_lead: safeCpl,
+                    roas: parseFloat(ad.roas || ad.ROAS || ad.roi || ad.ROI || 0),
+                    // Normalized string fields - these will override original if they exist
+                    ad_name: adName,
+                    campaign_name: campaignName,
+                    ad_id: adId,
+                    performance_category: performanceCategory,
+                    // Preserve original fields that might be useful
+                    adset_name: ad.adset_name || ad.adsetName || ad['Adset Name'] || '',
+                    justification: ad.Justification || ad.justification || '',
+                    recommendation: ad.Recommendation || ad.recommendation || '',
+                    objective: ad.objective || ad.Objective || '',
+                    ctr: ad.ctr || ad.CTR || 0,
+                    cpc: ad.cpc || ad.CPC || 0,
+                    cpm: ad.cpm || ad.CPM || 0,
+                    conversion_rate: ad.conversion_rate || ad.Conversion_Rate || ad['Conversion Rate'] || 0,
+                    // Date fields - preserve as-is (might be strings, Date objects, or timestamps)
+                    start_date: ad.start_date || ad.startDate || ad['Start Date'] || ad.Start_Date || null,
+                    stop_date: ad.stop_date || ad.stopDate || ad['Stop Date'] || ad.Stop_Date || null,
+                    // Ad metadata fields
+                    ad_created_time: ad.ad_created_time || ad.adCreatedTime || ad['Ad Created Time'] || ad.ad_created_time || null,
+                    effective_status: ad.effective_status || ad.effectiveStatus || ad['Effective Status'] || ad.Effective_Status || 'UNKNOWN'
+                };
             } catch (error) {
                 console.error('Error normalizing ad data:', error);
                 console.error('Problematic ad data:', ad);
@@ -309,7 +309,7 @@ async function fetchData() {
         console.log("Normalized Data:", rawAdsData);
         const totalLeads = rawAdsData.reduce((sum, ad) => sum + ad.total_leads, 0);
         console.log("Total Leads Found:", totalLeads);
-        
+
         // Show leads breakdown by ad
         console.log("Leads per ad:", rawAdsData.map(ad => ({
             ad_name: ad.ad_name,
@@ -320,7 +320,7 @@ async function fetchData() {
                 'Leads': ad['Leads'] || 'not found'
             }
         })));
-        
+
         if (totalLeads === 0) {
             console.warn("⚠️ WARNING: No leads found! Check if the field name in Google Sheets matches one of: total_leads, leads, Leads, Total Leads, total_leads_generated, leads_generated, conversions");
         }
@@ -332,9 +332,9 @@ async function fetchData() {
 
         filteredData = [...rawAdsData];
         applyFilters();
-        
+
         const now = new Date();
-        document.getElementById('lastUpdated').innerHTML = 
+        document.getElementById('lastUpdated').innerHTML =
             `<i class="fas fa-check-circle" style="color: var(--success);"></i> Last synced: ${now.toLocaleTimeString()}`;
 
         showToast("Data loaded successfully!", "success");
@@ -344,10 +344,10 @@ async function fetchData() {
         console.error("Error stack:", error.stack);
         console.error("Error name:", error.name);
         console.error("Error code:", error.code);
-        
+
         let errorMessage = "Failed to connect to Dashboard Server";
         let errorDetails = "";
-        
+
         // Check if error has response (from our server)
         if (error.message) {
             // Check if it's a server error response
@@ -363,19 +363,19 @@ async function fetchData() {
                 errorDetails = error.message;
             }
         }
-        
+
         // Check for network errors
         if (error.name === 'TypeError' && error.message.includes('fetch')) {
             errorMessage = "Network Error";
             errorDetails = "Unable to reach the server. Please check:\n1. Server is running (npm start)\n2. Server is on port 3000\n3. No firewall blocking the connection";
         }
-        
+
         // If error was thrown with error data, extract it
         if (error.errorData) {
             const errorData = error.errorData;
             errorMessage = errorData.error || errorMessage;
             errorDetails = errorData.details || errorData.message || errorDetails;
-            
+
             // Provide user-friendly messages based on error type
             if (errorData.code === 'ECONNREFUSED') {
                 errorMessage = "Cannot connect to n8n webhook";
@@ -388,11 +388,11 @@ async function fetchData() {
                 errorDetails = "Could not resolve the n8n webhook hostname. Please check the URL configuration.";
             }
         }
-        
+
         console.error("Error details:", errorMessage, errorDetails);
         const fullErrorMessage = errorMessage + (errorDetails ? ": " + errorDetails : "");
         showToast(fullErrorMessage, "error");
-        document.getElementById('lastUpdated').innerHTML = 
+        document.getElementById('lastUpdated').innerHTML =
             `<i class="fas fa-exclamation-circle" style="color: var(--danger);"></i> ${errorMessage}`;
     } finally {
         loader.style.display = 'none';
@@ -407,7 +407,7 @@ function updateDashboard(data) {
 
     // Calculate comprehensive metrics
     const metrics = calculateMetrics(data);
-    
+
     // Update based on current page
     if (currentPage === 'overview') {
         // For overview, aggregate both ads and campaign data
@@ -419,8 +419,8 @@ function updateDashboard(data) {
         };
         updateKPIs(combinedMetrics);
         renderCharts(data, campaignData);
-    renderCampaignComparison(data);
-    renderTable(data);
+        renderCampaignComparison(data);
+        renderTable(data);
         renderInsights(data, combinedMetrics);
         document.getElementById('tableCount').textContent = `Showing ${data.length} ads across ${campaignData.length} campaigns`;
     } else if (currentPage === 'ads') {
@@ -436,7 +436,7 @@ function updateDashboard(data) {
         } else {
             campaignData = aggregateCampaignData(data);
         }
-        
+
         updateCampaignKPIs(campaignData);
         renderCampaignCharts(campaignData);
         renderCampaignComparison(campaignData);
@@ -444,7 +444,7 @@ function updateDashboard(data) {
         renderCampaignWiseTable(sortedCampaigns);
         document.getElementById('campaignTableCount').textContent = `Showing ${campaignData.length} campaigns`;
     }
-    
+
     // Update campaign filter
     updateCampaignFilter(data);
 }
@@ -501,10 +501,10 @@ function updateKPIs(metrics) {
     animateValue("totalImpressions", metrics.totalImpressions, "");
     animateValue("totalClicks", metrics.totalClicks, "");
     animateValue("avgROAS", metrics.avgROAS, "", "x");
-    
+
     document.getElementById('conversionRate').textContent = metrics.convRate.toFixed(2) + '%';
     document.getElementById('ctr').textContent = metrics.ctr.toFixed(2) + '%';
-    
+
     // Add change indicators (simulated - you can enhance with historical data)
     updateChangeIndicators();
 }
@@ -551,7 +551,7 @@ function renderMainTrendChart(data) {
     if (!ctx) return;
 
     const sortBy = document.getElementById('chartSort')?.value || 'spend';
-    
+
     // Filter out null/undefined and ensure we have valid data
     let sorted = [...data].filter(ad => ad != null && ad.total_spend != null).sort((a, b) => {
         if (sortBy === 'spend') return (b.total_spend || 0) - (a.total_spend || 0);
@@ -635,7 +635,7 @@ function renderMainTrendChart(data) {
                         display: false
                     },
                     ticks: {
-                        callback: function(value) {
+                        callback: function (value) {
                             return '₹' + value.toLocaleString();
                         }
                     }
@@ -710,7 +710,7 @@ function renderPieChart(data) {
                 },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             const label = context.label || '';
                             const value = context.parsed || 0;
                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
@@ -730,7 +730,7 @@ function renderPerformanceChart(data, campaignData = null) {
 
     // Use provided campaignData or aggregate it
     let campaignPerf = {};
-    
+
     if (campaignData && Array.isArray(campaignData)) {
         // Use provided aggregated campaign data
         campaignData.forEach(camp => {
@@ -742,9 +742,9 @@ function renderPerformanceChart(data, campaignData = null) {
         });
     } else {
         // Aggregate from ad data
-    data.filter(ad => ad != null).forEach(ad => {
-        const camp = ad.campaign_name || 'Unknown';
-        if (!campaignPerf[camp]) {
+        data.filter(ad => ad != null).forEach(ad => {
+            const camp = ad.campaign_name || 'Unknown';
+            if (!campaignPerf[camp]) {
                 campaignPerf[camp] = { spend: 0, leads: 0, cplSum: 0, cplCount: 0 };
             }
             campaignPerf[camp].spend += ad.total_spend || 0;
@@ -755,7 +755,7 @@ function renderPerformanceChart(data, campaignData = null) {
                 campaignPerf[camp].cplCount += 1;
             }
         });
-        
+
         // Calculate averages
         Object.keys(campaignPerf).forEach(camp => {
             const perf = campaignPerf[camp];
@@ -763,10 +763,10 @@ function renderPerformanceChart(data, campaignData = null) {
         });
     }
 
-    const labels = Object.keys(campaignPerf).sort((a, b) => 
+    const labels = Object.keys(campaignPerf).sort((a, b) =>
         (campaignPerf[b].totalLeads || campaignPerf[b].leads || 0) - (campaignPerf[a].totalLeads || campaignPerf[a].leads || 0)
     ).slice(0, 10);
-    
+
     const avgCPL = labels.map(camp => campaignPerf[camp].avgCPL || 0);
     const totalLeads = labels.map(camp => campaignPerf[camp].totalLeads || campaignPerf[camp].leads || 0);
 
@@ -813,7 +813,7 @@ function renderPerformanceChart(data, campaignData = null) {
                     beginAtZero: true,
                     position: 'left',
                     ticks: {
-                        callback: function(value) {
+                        callback: function (value) {
                             return '₹' + value.toFixed(0);
                         }
                     }
@@ -843,7 +843,7 @@ function renderROIChart(data) {
         }
         campaignROI[camp].spend += ad.total_spend || 0;
         campaignROI[camp].leads += ad.total_leads || 0;
-        
+
         // Calculate revenue from ROAS if available
         if (ad.roas && ad.roas > 0) {
             campaignROI[camp].revenue += (ad.total_spend || 0) * ad.roas;
@@ -868,8 +868,8 @@ function renderROIChart(data) {
             revenue: revenue
         };
     }).filter(item => item.spend > 0) // Only campaigns with spend
-      .sort((a, b) => b.roi - a.roi) // Sort by ROI descending
-      .slice(0, 8); // Top 8
+        .sort((a, b) => b.roi - a.roi) // Sort by ROI descending
+        .slice(0, 8); // Top 8
 
     if (roiCalculations.length === 0) {
         if (chartInstances.roi) {
@@ -893,7 +893,7 @@ function renderROIChart(data) {
             datasets: [{
                 label: 'ROI %',
                 data: roiData,
-                backgroundColor: roiData.map(roi => 
+                backgroundColor: roiData.map(roi =>
                     roi > 0 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(239, 68, 68, 0.8)'
                 ),
                 borderRadius: 8
@@ -909,7 +909,7 @@ function renderROIChart(data) {
                 },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             return `ROI: ${context.parsed.x.toFixed(1)}%`;
                         }
                     }
@@ -919,7 +919,7 @@ function renderROIChart(data) {
                 x: {
                     beginAtZero: true,
                     ticks: {
-                        callback: function(value) {
+                        callback: function (value) {
                             return value.toFixed(0) + '%';
                         }
                     }
@@ -944,9 +944,9 @@ function renderCampaignComparison(data) {
 
     // Check if data is campaign data or ad data
     const isCampaignData = data.length > 0 && data[0].campaign_id && !data[0].ad_name;
-    
+
     let sortedCampaigns = [];
-    
+
     if (isCampaignData) {
         // Direct campaign data
         sortedCampaigns = data
@@ -1025,7 +1025,7 @@ function renderCampaignComparison(data) {
             </div>
             <div class="campaign-stats">
                 <div class="stat-item">
-                    <div class="stat-value">₹${camp.spend.toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
+                    <div class="stat-value">₹${camp.spend.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
                     <div class="stat-label">Total Spend</div>
                 </div>
                 <div class="stat-item">
@@ -1050,13 +1050,13 @@ function renderCampaignComparison(data) {
 // ==========================================
 function getPerformanceStatus(ad) {
     // Check multiple field names for performance status
-    const perfValue = ad['Performing Ad'] || 
-                     ad.performing_ad || 
-                     ad.Performing_Ad ||
-                     ad.performance_category || 
-                     ad.performance || 
-                     ad.status || 
-                     '';
+    const perfValue = ad['Performing Ad'] ||
+        ad.performing_ad ||
+        ad.Performing_Ad ||
+        ad.performance_category ||
+        ad.performance ||
+        ad.status ||
+        '';
     return String(perfValue).trim();
 }
 
@@ -1064,10 +1064,10 @@ function getPerformanceInfo(ad) {
     const perf = getPerformanceStatus(ad).toLowerCase();
     const isGood = perf === 'yes' || perf.includes('good') || perf.includes('performing');
     const isBad = perf === 'no' || perf.includes('wasted') || perf.includes('bad') || perf.includes('poor');
-    
+
     let statusColor = 'gray';
     let statusText = getPerformanceStatus(ad) || 'Unknown';
-    
+
     if (isGood) {
         statusColor = 'green';
         statusText = 'Performing Well';
@@ -1075,7 +1075,7 @@ function getPerformanceInfo(ad) {
         statusColor = 'red';
         statusText = 'Needs Optimization';
     }
-    
+
     return { statusColor, statusText, isGood, isBad };
 }
 
@@ -1108,7 +1108,7 @@ function renderTable(data) {
                 <strong style="display: block; margin-bottom: 4px;">${escapeHtml(ad.ad_name)}</strong>
                 <small style="color: var(--text-light); font-size: 11px;">${escapeHtml(ad.campaign_name)}</small>
             </td>
-            <td class="text-right">₹${ad.total_spend.toLocaleString(undefined, {maximumFractionDigits: 2})}</td>
+            <td class="text-right">₹${ad.total_spend.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
             <td class="text-right">${ad.total_impressions.toLocaleString()}</td>
             <td class="text-right">${ad.clicks.toLocaleString()}</td>
             <td class="text-right"><strong>${ad.total_leads}</strong></td>
@@ -1126,7 +1126,7 @@ function renderTable(data) {
 
 function filterTable() {
     const searchTerm = document.getElementById('tableSearch')?.value.toLowerCase() || '';
-    
+
     // Apply base filters first (this updates filteredData)
     const campaignFilter = document.getElementById('campaignFilter')?.value || 'all';
     const statusFilter = document.getElementById('statusFilter')?.value || 'all';
@@ -1134,31 +1134,31 @@ function filterTable() {
 
     let baseFiltered = rawAdsData.filter(ad => {
         if (!ad) return false;
-        
+
         // Campaign filter
         let matchesCampaign = true;
         if (campaignFilter !== 'all') {
             matchesCampaign = ad.campaign_name === campaignFilter;
         }
-        
+
         // Status filter
         const perfInfo = getPerformanceInfo(ad);
-        
+
         let matchesStatus = true;
         if (statusFilter === 'good') {
             matchesStatus = perfInfo.isGood;
         } else if (statusFilter === 'bad') {
             matchesStatus = perfInfo.isBad;
         }
-        
+
         return matchesCampaign && matchesStatus;
     });
-    
+
     // Then apply search filter
     const searchFiltered = baseFiltered.filter(ad => {
         if (!ad) return false;
         return (ad.ad_name || '').toLowerCase().includes(searchTerm) ||
-               (ad.campaign_name && ad.campaign_name.toLowerCase().includes(searchTerm));
+            (ad.campaign_name && ad.campaign_name.toLowerCase().includes(searchTerm));
     });
 
     filteredData = searchFiltered;
@@ -1189,8 +1189,8 @@ function sortTable(field) {
 
     filteredData = filteredData.filter(ad => ad != null).sort((a, b) => {
         let aVal, bVal;
-        
-        switch(field) {
+
+        switch (field) {
             case 'spend':
                 aVal = a.total_spend || 0;
                 bVal = b.total_spend || 0;
@@ -1230,7 +1230,7 @@ function sortTable(field) {
         }
 
         if (typeof aVal === 'string') {
-            return currentSort.direction === 'asc' ? 
+            return currentSort.direction === 'asc' ?
                 aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
         }
 
@@ -1266,35 +1266,35 @@ function applyFilters() {
     const campaignFilter = document.getElementById('campaignFilter')?.value || 'all';
     const statusFilter = document.getElementById('statusFilter')?.value || 'all';
     const dateRange = document.getElementById('dateRange')?.value || 'all';
-    
+
     filteredData = rawAdsData.filter(ad => {
         if (!ad) return false;
-        
+
         // Campaign filter
         let matchesCampaign = true;
         if (campaignFilter !== 'all') {
             matchesCampaign = ad.campaign_name === campaignFilter;
         }
-        
+
         // Status filter
         const perf = (ad.performance_category || '').toLowerCase();
         const isGood = perf.includes('yes') || perf.includes('good') || perf.includes('performing');
         const isBad = perf.includes('wasted') || perf.includes('bad') || perf.includes('no') || perf.includes('poor');
-        
+
         let matchesStatus = true;
         if (statusFilter === 'good') {
             matchesStatus = isGood;
         } else if (statusFilter === 'bad') {
             matchesStatus = isBad;
         }
-        
+
         // Date filter (placeholder - would need date field in data)
         // For now, just return true
         let matchesDate = true;
-        
+
         return matchesCampaign && matchesStatus && matchesDate;
     });
-    
+
     updateDashboard(filteredData);
 }
 
@@ -1310,9 +1310,9 @@ function renderInsights(data, metrics) {
 
     // Top performing campaign
     if (campaignData.length > 0) {
-        const topCampaign = campaignData.reduce((prev, curr) => 
+        const topCampaign = campaignData.reduce((prev, curr) =>
             ((curr.leads || 0) > (prev.leads || 0)) ? curr : prev, campaignData[0]);
-        
+
         if (topCampaign && topCampaign.leads > 0) {
             insights.push({
                 type: 'positive',
@@ -1326,14 +1326,14 @@ function renderInsights(data, metrics) {
     // Top performing ad
     const validData = data.filter(ad => ad != null);
     if (validData.length > 0) {
-    const topPerformer = validData.reduce((prev, curr) => 
-        ((curr.total_leads || 0) > (prev.total_leads || 0)) ? curr : prev, validData[0]);
-    
-    if (topPerformer && topPerformer.total_leads > 0) {
-        insights.push({
-            type: 'positive',
+        const topPerformer = validData.reduce((prev, curr) =>
+            ((curr.total_leads || 0) > (prev.total_leads || 0)) ? curr : prev, validData[0]);
+
+        if (topPerformer && topPerformer.total_leads > 0) {
+            insights.push({
+                type: 'positive',
                 icon: 'fa-star',
-            title: 'Top Performing Ad',
+                title: 'Top Performing Ad',
                 message: `"${topPerformer.ad_name}" is generating ${topPerformer.total_leads} leads with a CPL of ₹${(topPerformer.cost_per_lead || (topPerformer.total_leads > 0 ? topPerformer.total_spend / topPerformer.total_leads : 0)).toFixed(2)}.`
             });
         }
@@ -1371,12 +1371,12 @@ function renderInsights(data, metrics) {
     if (worstPerformer) {
         const worstCPL = worstPerformer.cost_per_lead || (worstPerformer.total_leads > 0 ? worstPerformer.total_spend / worstPerformer.total_leads : 0);
         if (worstCPL > metrics.avgCPL * 1.5) {
-        insights.push({
-            type: 'negative',
-            icon: 'fa-exclamation-triangle',
+            insights.push({
+                type: 'negative',
+                icon: 'fa-exclamation-triangle',
                 title: 'Ad Optimization Opportunity',
                 message: `"${worstPerformer.ad_name}" has a CPL of ₹${worstCPL.toFixed(2)} (${((worstCPL / metrics.avgCPL - 1) * 100).toFixed(0)}% above average). Review creative, audience targeting, or consider pausing.`
-        });
+            });
         }
     }
 
@@ -1445,13 +1445,13 @@ function showDetails(adId) {
         }
         return defaultValue;
     };
-    
+
     // Try to find the ad in both rawAdsData and filteredData
     let ad = rawAdsData.find(a => {
         const id = a.ad_id || a.adId || a.id || a._id || a.ID;
         return id == adId || id === adId || String(id) === String(adId);
     });
-    
+
     // If not found, try filteredData
     if (!ad) {
         ad = filteredData.find(a => {
@@ -1459,7 +1459,7 @@ function showDetails(adId) {
             return id == adId || id === adId || String(id) === String(adId);
         });
     }
-    
+
     if (!ad) {
         showToast("Ad details not found", "error");
         return;
@@ -1470,7 +1470,7 @@ function showDetails(adId) {
         'campaign_name', 'Campaign Name', 'campaignName', 'Campaign_Name',
         'Campaign', 'campaign', 'CampaignName'
     ], '');
-    
+
     // If campaign_name is empty, try adset_name
     if (!campaignName || campaignName.trim() === '') {
         campaignName = getField(ad, [
@@ -1478,19 +1478,19 @@ function showDetails(adId) {
             'ad_set_name', 'Ad Set Name'
         ], 'N/A');
     }
-    
+
     if (!campaignName || campaignName.trim() === '') {
         campaignName = 'N/A';
     }
-    
+
     const performanceCategory = getField(ad, [
         'Performing Ad', 'performing_ad', 'Performing_Ad', 'performingAd',
         'performance_category', 'Performance Category', 'performanceCategory',
-        'Performance_Category', 'performance', 'Performance', 
+        'Performance_Category', 'performance', 'Performance',
         'status', 'Status', 'Performance_Status', 'performance_status',
         'PerformanceStatus'
     ], 'Unknown');
-    
+
     const adName = getField(ad, [
         'ad_name', 'Ad Name', 'adName', 'Ad_Name',
         'name', 'Name', 'ad', 'Ad', 'AdName'
@@ -1512,7 +1512,7 @@ function showDetails(adId) {
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px;">
             <div style="padding: 16px; background: var(--bg-body); border-radius: 10px;">
                 <small style="color: var(--text-light); font-weight: 600; text-transform: uppercase;">Total Spend</small>
-                <h3 style="margin-top: 8px; color: var(--primary);">₹${(ad.total_spend || 0).toLocaleString(undefined, {maximumFractionDigits: 2})}</h3>
+                <h3 style="margin-top: 8px; color: var(--primary);">₹${(ad.total_spend || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</h3>
             </div>
             <div style="padding: 16px; background: var(--bg-body); border-radius: 10px;">
                 <small style="color: var(--text-light); font-weight: 600; text-transform: uppercase;">Leads Generated</small>
@@ -1584,7 +1584,7 @@ function showDetails(adId) {
             <p style="margin-top: 4px; color: var(--primary); font-weight: 600;">${escapeHtml(performanceCategory)}</p>
         </div>
     `;
-    
+
     document.getElementById('detailModal').style.display = 'flex';
 }
 
@@ -1622,15 +1622,15 @@ function exportToCSV() {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
-    
+
     link.setAttribute('href', url);
     link.setAttribute('download', `meta-ads-data-${new Date().toISOString().split('T')[0]}.csv`);
     link.style.visibility = 'hidden';
-    
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     showToast("Data exported successfully!", "success");
 }
 
@@ -1641,10 +1641,10 @@ function animateValue(id, value, prefix = "", suffix = "") {
     const obj = document.getElementById(id);
     if (!obj) return;
 
-    const formatted = typeof value === 'number' 
+    const formatted = typeof value === 'number'
         ? (Number.isInteger(value) ? value.toLocaleString() : value.toFixed(2))
         : value;
-    
+
     obj.textContent = prefix + formatted + suffix;
 }
 
@@ -1660,7 +1660,7 @@ function showToast(message, type = 'info') {
 
     toast.textContent = message;
     toast.className = `toast show ${type}`;
-    
+
     setTimeout(() => {
         toast.classList.remove('show');
     }, 3000);
@@ -1759,7 +1759,7 @@ function renderAdsTrendChart(data) {
                         display: false
                     },
                     ticks: {
-                        callback: function(value) {
+                        callback: function (value) {
                             return '₹' + value.toLocaleString();
                         }
                     }
@@ -1784,7 +1784,7 @@ function renderAdsTrendChart(data) {
 // Helper function to format date
 function formatDate(dateValue) {
     if (!dateValue) return 'N/A';
-    
+
     try {
         // If it's already a formatted date string (YYYY-MM-DD), return as-is
         if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateValue)) {
@@ -1794,13 +1794,13 @@ function formatDate(dateValue) {
             }
             return dateValue;
         }
-        
+
         // Try to parse as Date
         const date = new Date(dateValue);
         if (!isNaN(date.getTime())) {
             return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
         }
-        
+
         return dateValue;
     } catch (e) {
         return dateValue;
@@ -1810,20 +1810,20 @@ function formatDate(dateValue) {
 // Helper function to get ad status (Active/Inactive)
 function getAdStatus(effectiveStatus) {
     if (!effectiveStatus) return { text: 'Unknown', class: 'gray' };
-    
+
     const status = String(effectiveStatus).toUpperCase();
-    
+
     // Active statuses
     if (status === 'ACTIVE' || status === 'CAMPAIGN_ACTIVE' || status === 'ADSET_ACTIVE') {
         return { text: 'Active', class: 'green' };
     }
-    
+
     // Inactive/Paused statuses
-    if (status.includes('PAUSED') || status.includes('DISAPPROVED') || status.includes('ARCHIVED') || 
+    if (status.includes('PAUSED') || status.includes('DISAPPROVED') || status.includes('ARCHIVED') ||
         status === 'CAMPAIGN_PAUSED' || status === 'ADSET_PAUSED') {
         return { text: 'Inactive', class: 'red' };
     }
-    
+
     // Other statuses
     return { text: status.replace(/_/g, ' '), class: 'gray' };
 }
@@ -1857,7 +1857,7 @@ function renderAdsTable(data) {
                 <span class="status-dot ${adStatus.class}"></span>
                 <span style="font-size: 12px;">${adStatus.text}</span>
             </td>
-            <td class="text-right">₹${ad.total_spend.toLocaleString(undefined, {maximumFractionDigits: 2})}</td>
+            <td class="text-right">₹${ad.total_spend.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
             <td class="text-right">${ad.total_impressions.toLocaleString()}</td>
             <td class="text-right">${ad.clicks.toLocaleString()}</td>
             <td class="text-right"><strong>${ad.total_leads}</strong></td>
@@ -1878,7 +1878,7 @@ function filterAdsTable() {
     const filtered = filteredData.filter(ad => {
         if (!ad) return false;
         return (ad.ad_name || '').toLowerCase().includes(searchTerm) ||
-               (ad.campaign_name || '').toLowerCase().includes(searchTerm);
+            (ad.campaign_name || '').toLowerCase().includes(searchTerm);
     });
     renderAdsTable(filtered);
     document.getElementById('adsTableCount').textContent = `Showing ${filtered.length} ads`;
@@ -1898,22 +1898,22 @@ function sortAdsTable(field) {
 
     const sorted = [...filteredData].filter(ad => ad != null).sort((a, b) => {
         let aVal, bVal;
-        switch(field) {
+        switch (field) {
             case 'spend': aVal = a.total_spend || 0; bVal = b.total_spend || 0; break;
             case 'leads': aVal = a.total_leads || 0; bVal = b.total_leads || 0; break;
             case 'cpl': aVal = a.cost_per_lead || 0; bVal = b.cost_per_lead || 0; break;
             case 'roas': aVal = a.roas || 0; bVal = b.roas || 0; break;
             case 'ad_name': aVal = (a.ad_name || '').toLowerCase(); bVal = (b.ad_name || '').toLowerCase(); break;
             case 'campaign_name': aVal = (a.campaign_name || '').toLowerCase(); bVal = (b.campaign_name || '').toLowerCase(); break;
-            case 'ad_created_time': 
+            case 'ad_created_time':
                 aVal = a.ad_created_time ? new Date(a.ad_created_time).getTime() : 0;
                 bVal = b.ad_created_time ? new Date(b.ad_created_time).getTime() : 0;
                 break;
-            case 'effective_status': 
+            case 'effective_status':
                 aVal = (a.effective_status || '').toLowerCase();
                 bVal = (b.effective_status || '').toLowerCase();
                 break;
-            case 'status': 
+            case 'status':
                 const aPerfInfo = getPerformanceInfo(a);
                 const bPerfInfo = getPerformanceInfo(b);
                 aVal = aPerfInfo.isGood ? 1 : aPerfInfo.isBad ? -1 : 0;
@@ -2010,10 +2010,10 @@ function renderCampaignPieChart(data) {
 
     // Check if data is campaign data (has campaign_name directly) or ad data (needs aggregation)
     const isCampaignData = data.length > 0 && data[0].campaign_id && !data[0].ad_name;
-    
+
     let labels = [];
     let spendData = [];
-    
+
     if (isCampaignData) {
         // Direct campaign data
         labels = data.filter(camp => camp != null).map(camp => camp.campaign_name || 'Unknown');
@@ -2031,7 +2031,7 @@ function renderCampaignPieChart(data) {
         labels = Object.keys(campaignStats);
         spendData = Object.values(campaignStats).map(c => c.spend);
     }
-    
+
     if (labels.length === 0) {
         if (chartInstances.campaignPie) {
             chartInstances.campaignPie.destroy();
@@ -2074,7 +2074,7 @@ function renderCampaignPieChart(data) {
                 },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             const label = context.label || '';
                             const value = context.parsed || 0;
                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
@@ -2111,9 +2111,9 @@ function renderCampaignROIChart(data) {
     }).sort((a, b) => b - a).slice(0, 8);
 
     const sortedLabels = labels.sort((a, b) => {
-        const roiA = campaignROI[a].spend > 0 ? 
+        const roiA = campaignROI[a].spend > 0 ?
             ((campaignROI[a].revenue - campaignROI[a].spend) / campaignROI[a].spend) * 100 : 0;
-        const roiB = campaignROI[b].spend > 0 ? 
+        const roiB = campaignROI[b].spend > 0 ?
             ((campaignROI[b].revenue - campaignROI[b].spend) / campaignROI[b].spend) * 100 : 0;
         return roiB - roiA;
     }).slice(0, 8);
@@ -2129,7 +2129,7 @@ function renderCampaignROIChart(data) {
             datasets: [{
                 label: 'ROI %',
                 data: roiData,
-                backgroundColor: roiData.map(roi => 
+                backgroundColor: roiData.map(roi =>
                     roi > 0 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(239, 68, 68, 0.8)'
                 ),
                 borderRadius: 8
@@ -2143,7 +2143,7 @@ function renderCampaignROIChart(data) {
                 legend: { display: false },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             return `ROI: ${context.parsed.x.toFixed(1)}%`;
                         }
                     }
@@ -2153,7 +2153,7 @@ function renderCampaignROIChart(data) {
                 x: {
                     beginAtZero: true,
                     ticks: {
-                        callback: function(value) {
+                        callback: function (value) {
                             return value.toFixed(0) + '%';
                         }
                     }
@@ -2169,18 +2169,18 @@ function renderCampaignPerformanceChart(data) {
 
     // Check if data is campaign data or ad data
     const isCampaignData = data.length > 0 && data[0].campaign_id && !data[0].ad_name;
-    
+
     let labels = [];
     let avgCPL = [];
     let totalClicks = [];
-    
+
     if (isCampaignData) {
         // Direct campaign data
         const sorted = [...data]
             .filter(camp => camp != null)
             .sort((a, b) => (b.total_clicks || b.clicks || 0) - (a.total_clicks || a.clicks || 0))
             .slice(0, 10);
-        
+
         labels = sorted.map(camp => camp.campaign_name || 'Unknown');
         avgCPL = sorted.map(camp => camp.cpc || camp.avgCPL || (camp.total_clicks > 0 ? (camp.total_spend || camp.spend || 0) / (camp.total_clicks || camp.clicks || 1) : 0));
         totalClicks = sorted.map(camp => camp.total_clicks || camp.clicks || 0);
@@ -2203,11 +2203,11 @@ function renderCampaignPerformanceChart(data) {
             const cpls = campaignPerf[camp].cpl;
             return cpls.length > 0 ? cpls.reduce((a, b) => a + b, 0) / cpls.length : 0;
         });
-        totalClicks = labels.map(camp => 
+        totalClicks = labels.map(camp =>
             campaignPerf[camp].leads.reduce((a, b) => a + b, 0)
         );
     }
-    
+
     if (labels.length === 0) {
         if (chartInstances.campaignPerformance) {
             chartInstances.campaignPerformance.destroy();
@@ -2259,7 +2259,7 @@ function renderCampaignPerformanceChart(data) {
                     beginAtZero: true,
                     position: 'left',
                     ticks: {
-                        callback: function(value) {
+                        callback: function (value) {
                             return '₹' + value.toFixed(0);
                         }
                     }
@@ -2288,7 +2288,10 @@ function renderCampaignWiseTable(campaignData) {
     }
 
     campaignData.forEach(camp => {
-        const campaignId = camp.campaign_id || 'N/A';   
+        const campaignStatus = getAdStatus(camp.status || camp.effective_status);
+        const campaignDate = formatDate(
+            camp.created_time || camp.start_date || camp.date_start
+        );
         const campaignName = camp.campaign_name || camp.name || 'Unknown';
         const spend = camp.total_spend || camp.spend || 0;
         const impressions = camp.total_impressions || camp.impressions || 0;
@@ -2299,13 +2302,22 @@ function renderCampaignWiseTable(campaignData) {
         const avgROAS = camp.avgROAS || camp.roas || 0;
         const ctr = camp.ctr || (impressions > 0 ? (clicks / impressions) * 100 : 0);
         const convRate = camp.convRate || camp.conversion_rate || (clicks > 0 ? (leads / clicks) * 100 : 0);
-        
+
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td><strong>${escapeHtml(campaignId)}</strong></td>
             <td><strong>${escapeHtml(campaignName)}</strong></td>
+            <td>
+    <span class="status-dot ${campaignStatus.class}"></span>
+    <span style="font-size:12px">${campaignStatus.text}</span>
+  </td>
+
+  <td>
+    <small style="color: var(--text-light)">
+      ${campaignDate}
+    </small>
+  </td>
             <td class="text-right">${ads}</td>
-            <td class="text-right">₹${spend.toLocaleString(undefined, {maximumFractionDigits: 2})}</td>
+            <td class="text-right">₹${spend.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
             <td class="text-right">${impressions.toLocaleString()}</td>
             <td class="text-right">${clicks.toLocaleString()}</td>
             <td class="text-right"><strong>${leads}</strong></td>
@@ -2321,18 +2333,18 @@ function renderCampaignWiseTable(campaignData) {
 function filterCampaignTable() {
     const searchTerm = document.getElementById('campaignTableSearch')?.value.toLowerCase() || '';
     let campaignData = [];
-    
+
     // Use campaign data if available, otherwise aggregate from ads
     if (rawCampaignData && rawCampaignData.length > 0) {
         campaignData = rawCampaignData;
     } else {
         campaignData = aggregateCampaignData(filteredData);
     }
-    
-    const filtered = campaignData.filter(camp => 
+
+    const filtered = campaignData.filter(camp =>
         (camp.campaign_name || camp.name || '').toLowerCase().includes(searchTerm)
     );
-    
+
     filteredCampaignData = filtered;
     renderCampaignWiseTable(filtered);
     document.getElementById('campaignTableCount').textContent = `Showing ${filtered.length} campaigns`;
@@ -2353,7 +2365,7 @@ function sortCampaignTable(field) {
     const campaignData = aggregateCampaignData(filteredData);
     const sorted = [...campaignData].sort((a, b) => {
         let aVal, bVal;
-        switch(field) {
+        switch (field) {
             case 'spend': aVal = a.spend || 0; bVal = b.spend || 0; break;
             case 'leads': aVal = a.leads || 0; bVal = b.leads || 0; break;
             case 'cpl': aVal = a.avgCPL || 0; bVal = b.avgCPL || 0; break;
