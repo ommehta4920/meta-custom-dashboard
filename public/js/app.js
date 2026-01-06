@@ -992,7 +992,7 @@ function renderCampaignComparison(data) {
             <div class="campaign-card-header">
                 <div>
                     <div class="campaign-name">${escapeHtml(camp.name)}</div>
-                    <div class="campaign-meta">${camp.ads} ${camp.ads === 1 ? 'campaign' : 'campaigns'}</div>
+                    <div class="campaign-meta">${camp.ads} ${camp.ads === 1 ? 'Ad' : 'Ads'}</div>
                 </div>
             </div>
             <div class="campaign-stats">
