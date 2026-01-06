@@ -52,7 +52,7 @@
                 <h1><i class="fas fa-chart-bar"></i> Meta Ads Performance Dashboard</h1>
                 <p id="lastUpdated"><i class="fas fa-clock"></i> Syncing data...</p>
             </div>
-            <div class="actions">
+            <!-- <div class="actions">
                 <select id="campaignFilter" class="filter-select" onchange="applyFilters()">
                     <option value="all">All Campaigns</option>
                 </select>
@@ -73,7 +73,7 @@
                 <button class="btn-primary" onclick="fetchData()">
                     <i class="fas fa-sync-alt"></i> Refresh
                 </button>
-            </div>
+            </div> -->
         </header>
 
         <!-- Loading Overlay -->
@@ -136,14 +136,14 @@
                         <small id="clicksChange" class="kpi-change">--</small>
                     </div>
                 </div>
-                <div class="kpi-card">
+                <!-- <div class="kpi-card">
                     <div class="icon-box indigo"><i class="fas fa-chart-line"></i></div>
                     <div class="kpi-info">
                         <p>Average ROAS</p>
                         <h3 id="avgROAS">0x</h3>
                         <small id="roasChange" class="kpi-change">--</small>
                     </div>
-                </div>
+                </div> -->
                 <div class="kpi-card">
                     <div class="icon-box amber"><i class="fas fa-bullseye"></i></div>
                     <div class="kpi-info">
@@ -182,7 +182,7 @@
             </section>
 
             <!-- 2b. Additional Charts -->
-            <section class="charts-row">
+            <!-- <section class="charts-row">
                 <div class="card chart-medium">
                     <div class="card-header">
                         <h3><i class="fas fa-chart-line"></i> Performance Trend</h3>
@@ -199,7 +199,7 @@
                         <canvas id="roiChart"></canvas>
                     </div>
                 </div>
-            </section>
+            </section> -->
 
             <!-- 3. Campaign Performance Comparison -->
             <section class="campaign-comparison">
@@ -319,13 +319,13 @@
                             <h3 id="adsTotalClicks">0</h3>
                         </div>
                     </div>
-                    <div class="kpi-card">
+                    <!-- <div class="kpi-card">
                         <div class="icon-box indigo"><i class="fas fa-chart-line"></i></div>
                         <div class="kpi-info">
                             <p>Average ROAS</p>
                             <h3 id="adsAvgROAS">0x</h3>
                         </div>
-                    </div>
+                    </div> -->
                     <div class="kpi-card">
                         <div class="icon-box amber"><i class="fas fa-bullseye"></i></div>
                         <div class="kpi-info">
@@ -361,7 +361,7 @@
                             <h3><i class="fas fa-brain"></i> AI Ads Performance Analysis & Recommendations</h3>
                         </div>
                         <div class="insights-container" id="adsAiInsights">
-                           
+                            
                         </div>
                     </div>
                 </section> -->
@@ -462,13 +462,13 @@
                             <h3 id="campTotalClicks">0</h3>
                         </div>
                     </div>
-                    <div class="kpi-card">
+                    <!-- <div class="kpi-card">
                         <div class="icon-box indigo"><i class="fas fa-chart-line"></i></div>
                         <div class="kpi-info">
                             <p>Average ROAS</p>
                             <h3 id="campAvgROAS">0x</h3>
                         </div>
-                    </div>
+                    </div> -->
                     <div class="kpi-card">
                         <div class="icon-box amber"><i class="fas fa-bullseye"></i></div>
                         <div class="kpi-info">
@@ -548,7 +548,7 @@
                                     <option value="spend">Sort by Spend</option>
                                     <option value="leads">Sort by Leads</option>
                                     <option value="cpl">Sort by CPL</option>
-                                    <!-- <option value="roas">Sort by ROAS</option> -->
+                                    <option value="roas">Sort by ROAS</option>
                                 </select>
                             </div>
                         </div>

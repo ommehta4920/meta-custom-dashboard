@@ -992,7 +992,7 @@ function renderCampaignComparison(data) {
             <div class="campaign-card-header">
                 <div>
                     <div class="campaign-name">${escapeHtml(camp.name)}</div>
-                    <div class="campaign-meta">${camp.ads} ${camp.ads === 1 ? 'campaign' : 'campaigns'}</div>
+                    <div class="campaign-meta">${camp.ads} ${camp.ads === 1 ? 'Ad' : 'Ads'}</div>
                 </div>
             </div>
             <div class="campaign-stats">
@@ -2439,7 +2439,6 @@ function renderCampaignWiseTable(campaignData) {
             <td class="text-right">${clicks.toLocaleString()}</td>
             <td class="text-right"><strong>${leads}</strong></td>
             <td class="text-right">₹${avgCPL.toFixed(2)}</td>
-            <td class="text-right">${avgROAS > 0 ? avgROAS.toFixed(2) + 'x' : 'N/A'}</td>
             <td class="text-right">${ctr.toFixed(2)}%</td>
             <td class="text-right">${convRate.toFixed(2)}%</td>
             <td class="text-center">
