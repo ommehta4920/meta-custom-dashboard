@@ -2253,6 +2253,7 @@ function renderCampaignWiseTable(campaignData) {
     }
 
     campaignData.forEach(camp => {
+        const campaignId = camp.campaign_id || 'N/A';   
         const campaignName = camp.campaign_name || camp.name || 'Unknown';
         const spend = camp.total_spend || camp.spend || 0;
         const impressions = camp.total_impressions || camp.impressions || 0;
@@ -2266,6 +2267,7 @@ function renderCampaignWiseTable(campaignData) {
         
         const row = document.createElement('tr');
         row.innerHTML = `
+            <td><strong>${escapeHtml(campaignId)}</strong></td>
             <td><strong>${escapeHtml(campaignName)}</strong></td>
             <td class="text-right">${ads}</td>
             <td class="text-right">₹${spend.toLocaleString(undefined, {maximumFractionDigits: 2})}</td>
